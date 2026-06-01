@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LUX RGBW DMX Controller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <img src="{{ url_for('static', filename='lux_logo_white.png') }}" alt="LUX Dynamics Logo" class="logo">
+
+        <h1>RGBW DMX Controller</h1>
+
+        <div class="profile">
+            <h2>Standard Output Profile</h2>
+            <p>Red: 640 mA</p>
+            <p>Green: 450 mA</p>
+            <p>Blue: 490 mA</p>
+            <p>White: 1050 mA max</p>
+        </div>
+
+        <div class="mode-note">
+            <p>Demo Mode: This interface triggers preset DMX scenes only. It does not change driver current settings, DMX addresses, or CO programming.</p>
+        </div>
+
+	<div class="dimmer-card">
+   	 <h2>Dimmer</h2>
+
+  	  <input type="range" min="0" max="100" value="100" id="dimmerSlider" 	oninput="updateDimmer(this.value)">
+    	<p id="dimmerValue">Brightness: 100%</p>
+
+    <div class="dimmer-shortcuts">
+        <button onclick="setBrightnessShortcut(1)" class="dim-shortcut">1%</button>
+        <button onclick="setBrightnessShortcut(10)" class="dim-shortcut">10%</button>
+        <button onclick="setBrightnessShortcut(100)" class="dim-shortcut">Full</button>
+    </div>
+</div>
+
+        <div class="buttons">
+            <button onclick="sendScene('red')" class="red">Red</button>
+            <button onclick="sendScene('green')" class="green">Green</button>
+            <button onclick="sendScene('blue')" class="blue">Blue</button>
+            <button onclick="sendScene('white')" class="white">White</button>
+            <button onclick="sendScene('gradient')" class="gradient">Gradient</button>
+            <button onclick="sendScene('off')" class="off">Off</button>
+            <button onclick="sendScene('demo')" class="demo">Demo Sequence</button>
+        </div>
+
+        <p id="status">Ready</p>
+
+        <footer class="footer">
+            Developed By: Kailani Puava Alarcon
+        </footer>
+    </div>
+
+    <script>
+        function sendScene(scene) {
+            document.getElementById("status").innerText = "Sending: " + scene;
+
+            fetch(`/scene/${scene}`, { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "ok") {
+                        document.getElementById("status").innerText =
+                            "Triggered: " + data.scene;
+                    } else {
+                        document.getElementById("status").innerText =
+                            "Error: " + data.message;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("status").innerText =
+                        "Error sending command";
+                });
+        }
+
+        function updateDimmer(value) {
+            document.getElementById("dimmerValue").innerText =
+                "Brightness: " + value + "%";
+
+            fetch(`/brightness/${value}`, { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "ok") {
+                        document.getElementById("status").innerText =
+                            "Brightness set to: " + data.brightness + "%";
+                    } else {
+                        document.getElementById("status").innerText =
+                            "Dimmer error: " + data.message;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("status").innerText =
+                        "Error sending brightness command";
+                });
+        }
+    </script>
+
+	<script>
+    	function setBrightnessShortcut(value) {
+        	document.getElementById("dimmerSlider").value = value;
+        	document.getElementById("dimmerValue").innerText =
+            	"Brightness: " + value + "%";
+
+      	  fetch(`/brightness/${value}`, { method: "POST" })
+         	   .then(response => response.json())
+        	    .then(data => {
+              	  if (data.status === "ok") {
+                   	 document.getElementById("status").innerText =
+                    	    "Brightness set to: " + data.brightness + "%";
+              	  } else {
+                   	 document.getElementById("status").innerText =
+                      	  "Dimmer error: " + data.message;
+              	  }	
+         	   })
+          	  .catch(error => {
+             	   document.getElementById("status").innerText =
+                  	  "Error sending brightness command";
+           	 });
+  	  }
+	</script>
+
+</body>
+</html>
