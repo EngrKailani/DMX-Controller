@@ -1,10 +1,11 @@
 from flask import Flask, render_template, jsonify
 import serial
 import time
+import os
 
 app = Flask(__name__)
 
-ARDUINO_PORT = "COM5"
+ARDUINO_PORT = os.environ.get("DMX_ARDUINO_PORT", "COM5")
 ARDUINO_BAUD = 115200
 
 arduino = None
@@ -74,4 +75,4 @@ def brightness(value):
 
 if __name__ == "__main__":
     connect_arduino()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host=os.environ.get("DMX_HOST", "127.0.0.1"), port=5000, debug=False)
