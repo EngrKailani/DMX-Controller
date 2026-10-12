@@ -142,18 +142,14 @@ pip install pyautogui pygetwindow
 
 ### 2. Check the Arduino Serial Port
 
-The Flask app is currently set to use:
+The Flask app defaults to **COM5** at **115200 baud**. You can select the USB serial port using `DMX_ARDUINO_PORT` without editing the source. In Windows PowerShell:
 
-```python
-ARDUINO_PORT = "COM5"
-ARDUINO_BAUD = 115200
+```powershell
+$env:DMX_ARDUINO_PORT = "COM5"   # Change to your actual COM port
+python app.py
 ```
 
-If the Arduino is connected to a different COM port, update this line in `app.py`:
-
-```python
-ARDUINO_PORT = "COM5"
-```
+If the Arduino is connected on another port, select that one instead.
 
 To find the correct port, open Device Manager on Windows and check the Arduino port under **Ports (COM & LPT)**.
 
@@ -169,13 +165,7 @@ Select the correct board and port.
 
 Upload the sketch to the Arduino.
 
-Important: If the Arduino IDE gives an error on the first line, check that the first line begins with:
-
-```cpp
-const int DMX_TX_PIN = 18;
-```
-
-The sketch must start with `const`, not `fconst`.
+**Recovery correction:** The tracked Arduino sketch now starts with `const int DMX_TX_PIN = 18;`. The original `fconst` typo was corrected directly on `main`. The sketch has not been recompiled or tested against actual DMX hardware in this recovery pass.
 
 ### 4. Connect the DMX Hardware
 
@@ -206,11 +196,16 @@ Open this address in a browser:
 http://localhost:5000
 ```
 
-If another device on the same network needs to access the controller, use the host computer’s local IP address:
+**Security:** The server now listens on `127.0.0.1` only by default. It cannot be reached by another device on the LAN unless an operator intentionally changes the host setting.
 
-```text
-http://<computer-ip-address>:5000
+For an isolated, trusted test LAN only, the operator can explicitly enable network access:
+
+```powershell
+$env:DMX_HOST = "0.0.0.0"
+python app.py
 ```
+
+Then browse to `http://<computer-ip-address>:5000` from an authorized device. **The app has no HTTP authentication**, so do not enable this mode on a shared/untrusted network or expose port 5000 to the internet. Clear `DMX_HOST` or set it to `127.0.0.1` to return to local-only operation.
 
 ## How to Use the Controller
 
@@ -537,13 +532,13 @@ Some fixtures use a different channel order.
 
 ### The app works locally but not from another device
 
-The Flask app is configured to run on:
+The Flask app now starts with:
 
 ```python
-app.run(host="0.0.0.0", port=5000, debug=False)
+app.run(host=os.environ.get("DMX_HOST", "127.0.0.1"), port=5000, debug=False)
 ```
 
-This allows other devices on the same network to access the app.
+The default is **loopback-only**, so LAN access requires explicitly setting `DMX_HOST`. This does not add HTTP authentication.
 
 If another device cannot connect, check:
 
@@ -593,3 +588,15 @@ Project created for LUX Dynamics.
 ## License
 
 No license has been specified for this project.
+
+## October 2026 Engineering Recovery and Limitations
+
+The recovered firmware formerly began with `fconst int DMX_TX_PIN`, a clear compile error. This typo was corrected. The Flask app also now **binds to localhost by default**, and the Arduino serial port is configurable via `DMX_ARDUINO_PORT`. The original scene commands, RGBW mapping, demo sequence, and hardware pin constants remain intact.
+
+The server exposes unauthenticated POST endpoints, so the user interface's buttons do not constitute access control. **Do not expose port 5000 on an untrusted network.** For any deployed device, add authentication/authorization, CSRF/origin protections, rate limiting, command logging and fixture-safety controls before allowing remote access. The `status: ok` HTTP response means the Python process wrote a command to its serial port; it is **not** an acknowledgement from the fixture or a verified DMX physical response.
+
+The HTML page lists nominal color-channel currents (640/450/490 mA and up to 1050 mA). These are display text only; the firmware controls **0–255 DMX byte values** and contains no current-measurement feedback or current-programming code. Do not infer actual LED current from the dimmer percentage without the fixture's DMX personality, driver specifications and measurements.
+
+The firmware sends a 513-slot DMX packet at 250000 baud with two stop bits per slot, a 120 µs BREAK, and a 16 µs mark-after-break. Ideal serialization is approximately 22.708 ms. The main loop also waits 25 ms, implying roughly 21 frames per second **before additional processing**, not a verified refresh-rate measurement.
+
+[Source-based engineering recovery, reconstructed diagrams and independent offline tests](https://github.com/kalarcon775/kalarcon775.github.io/tree/main/projects/dmx). Original Arduino and fixture calibration data were not recovered in this documentation pass.
