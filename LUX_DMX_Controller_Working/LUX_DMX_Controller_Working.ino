@@ -1,4 +1,4 @@
-fconst int DMX_TX_PIN = 18;        // Mega TX1
+const int DMX_TX_PIN = 18;        // Mega TX1
 const int DMX_ENABLE_PIN = 2;     // DFR0260 DE control
 const int LED_PIN = 13;
 
