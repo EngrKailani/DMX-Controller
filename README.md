@@ -599,4 +599,4 @@ The HTML page lists nominal color-channel currents (640/450/490 mA and up to 105
 
 The firmware sends a 513-slot DMX packet at 250000 baud with two stop bits per slot, a 120 µs BREAK, and a 16 µs mark-after-break. Ideal serialization is approximately 22.708 ms. The main loop also waits 25 ms, implying roughly 21 frames per second **before additional processing**, not a verified refresh-rate measurement.
 
-[Source-based engineering recovery, reconstructed diagrams and independent offline tests](https://github.com/kalarcon775/kalarcon775.github.io/tree/main/projects/dmx). Original Arduino and fixture calibration data were not recovered in this documentation pass.
+[Source-based engineering recovery, reconstructed diagrams and independent offline tests](https://github.com/EngrKailani/engrkailani.github.io/tree/main/projects/dmx). Original Arduino and fixture calibration data were not recovered in this documentation pass.
